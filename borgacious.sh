@@ -3,8 +3,6 @@
 #Login credentials for your external storage
 KEY=username=[yourusername],password=[yourpassword]
 
-sudo umount /mnt/block-devices
-
 #Are block devices mounted
 
 if [[ ! -d /mnt/block-devices ]]; then
@@ -53,6 +51,10 @@ for v in ${arr[*]}; do
 	                borg create -C zlib,6 "$borgrepo::$v_{now:%Y-%m-%d}" /mnt/block-devices/main--vg-$v--snap
 
 		fi
+		#Take a copy of the VM information
+		virsh dumpxml $v > /mnt/borgbackups/$HOSTNAME/$v-bbyo/$(date "+%d.%m.%Y")_$v.xml
+		#Take a copy of the LV information
+		sudo lvdisplay /dev/main-vg/$v >> /mnt/borgbackups/$HOSTNAME/$v-bbyo/$(date "+%d.%m.%Y")_$v.lvdisplay
 		#Remove snapshot
 		lvremove -f /dev/main-vg/$v-snap
 	fi
@@ -62,8 +64,8 @@ done
 
 #umount backups and block-devices
 
-umount /mnt/block-devices
-umount /mnt/borgbackups
+sudo umount /mnt/block-devices
+sudo umount /mnt/borgbackups
 
 #Finish
 echo "VM backup complete"
